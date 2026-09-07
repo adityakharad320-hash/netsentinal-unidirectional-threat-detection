@@ -79,7 +79,7 @@ class OptimizedFlowState:
         "syn_count", "ack_count", "rst_count", "fin_count",
         "iat_stats", "pkt_size_stats",
         "timestamps", "dns_queries", "dns_record_types",
-        "tls_version", "tls_sni", "ja3", "has_tls",
+        "tls_version", "tls_sni", "ja3", "ja4", "has_tls",
         "last_inference_ts", "last_inference_pkts", "risk_level"
     )
 
@@ -122,6 +122,7 @@ class OptimizedFlowState:
         self.tls_version: Optional[str] = None
         self.tls_sni: Optional[str] = None
         self.ja3: Optional[str] = None
+        self.ja4: Optional[str] = None
         self.has_tls: bool = False
 
         # Adaptive Inference Metadata
@@ -184,6 +185,8 @@ class OptimizedFlowState:
             self.tls_sni = event.sni_server_name
         if event.ja3:
             self.ja3 = event.ja3
+        if event.ja4:
+            self.ja4 = event.ja4
 
 
 class OptimizedHostGraphTracker:

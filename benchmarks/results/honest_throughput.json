@@ -1,0 +1,20 @@
+{
+  "sustained_realistic_replay": {
+    "total_events": 842,
+    "unique_flows": 615,
+    "elapsed_seconds": 15.0586,
+    "sustained_events_per_sec": 55.91,
+    "sustained_flows_per_sec": 40.84,
+    "sustained_network_mbps": 0.1043
+  },
+  "raw_engine_burst_capacity": {
+    "burst_events_tested": 5000,
+    "elapsed_seconds": 87.4028,
+    "burst_events_per_sec": 57.21,
+    "burst_wire_mbps_equivalent": 0.55,
+    "burst_wire_gbps_equivalent": 0.001,
+    "per_event_latency_p50_us": 17305.2,
+    "per_event_latency_p95_us": 18498.63,
+    "per_event_latency_p99_us": 20095.71
+  }
+}

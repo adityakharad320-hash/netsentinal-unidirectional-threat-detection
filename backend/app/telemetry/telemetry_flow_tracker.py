@@ -63,6 +63,7 @@ class TelemetryFlowState:
         self.tls_version: Optional[str] = None
         self.tls_sni: Optional[str] = None
         self.ja3: Optional[str] = None
+        self.ja4: Optional[str] = None
         self.has_tls: bool = False
 
     def update_connection(self, event: NormalizedConnectionEvent):
@@ -103,6 +104,8 @@ class TelemetryFlowState:
             self.tls_sni = event.sni_server_name
         if event.ja3:
             self.ja3 = event.ja3
+        if event.ja4:
+            self.ja4 = event.ja4
 
 class HostGraphTracker:
     """

@@ -143,11 +143,15 @@ class SuricataEveParser:
                 answers=answers_list
             )
 
-        # 4. TLS Event
-        elif event_type == "tls":
-            tls_data = data.get("tls", {})
+        # 4. TLS / QUIC Encrypted Session Event
+        elif event_type in ("tls", "quic"):
+            enc_data = data.get("tls") or data.get("quic") or {}
+            ja3_val = enc_data.get("ja3", {}).get("hash") if isinstance(enc_data.get("ja3"), dict) else enc_data.get("ja3")
+            ja3s_val = enc_data.get("ja3s", {}).get("hash") if isinstance(enc_data.get("ja3s"), dict) else enc_data.get("ja3s")
+            ja4_val = enc_data.get("ja4") or data.get("ja4")
+            ver = enc_data.get("version") or (f"QUIC {enc_data.get('quic_version')}" if enc_data.get("quic_version") else ("QUIC" if event_type == "quic" else None))
             return NormalizedTLSEvent(
-                event_id=f"tls_{flow_id_val}",
+                event_id=f"{event_type}_{flow_id_val}",
                 timestamp=ts,
                 source_engine="suricata",
                 src_ip=src_ip,
@@ -155,12 +159,13 @@ class SuricataEveParser:
                 src_port=src_port,
                 dst_port=dst_port,
                 protocol=proto,
-                version=tls_data.get("version"),
-                sni_server_name=tls_data.get("sni"),
-                subject=tls_data.get("subject"),
-                issuer=tls_data.get("issuerdn"),
-                ja3=tls_data.get("ja3", {}).get("hash") if isinstance(tls_data.get("ja3"), dict) else tls_data.get("ja3"),
-                ja3s=tls_data.get("ja3s", {}).get("hash") if isinstance(tls_data.get("ja3s"), dict) else tls_data.get("ja3s")
+                version=ver,
+                sni_server_name=enc_data.get("sni") or enc_data.get("server_name"),
+                subject=enc_data.get("subject"),
+                issuer=enc_data.get("issuerdn"),
+                ja3=ja3_val,
+                ja3s=ja3s_val,
+                ja4=ja4_val
             )
 
         # 5. HTTP Event

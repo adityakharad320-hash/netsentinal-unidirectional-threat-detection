@@ -1,0 +1,14 @@
+Family,Model,Type,InDist_Macro_F1,InDist_Macro_Prec,InDist_Macro_Rec,OOD_Macro_F1,OOD_Macro_Prec,OOD_Macro_Rec,Generalization_F1_Drop,Combined_Macro_F1,Combined_FP,Combined_FN,Native_Lat_p50_us,Native_Lat_p99_us,Throughput_evts_sec,Disk_Size_KB,Cold_Start_ms,ONNX_Lat_p50_us,ONNX_Size_KB
+Supervised,RandomForest,single,1.0,1.0,1.0,0.9933,0.9936,0.9933,0.0067,0.9952,0,0,36542.2,47995.16,26.7,184.2,77.02,27.3,78.5
+Supervised,XGBoost,single,1.0,1.0,1.0,0.9258,0.9447,0.9267,0.0742,0.9475,20,0,1027.6,1732.07,893.6,451.2,29.21,38.3,56.3
+Supervised,LightGBM,single,1.0,1.0,1.0,0.9279,0.9495,0.9275,0.0721,0.9488,20,0,1052.5,1339.09,923.2,508.4,50.17,35.8,277.1
+Supervised,CatBoost,single,1.0,1.0,1.0,0.9992,0.9992,0.9992,0.0008,0.9994,0,0,574.25,764.41,1709.0,345.0,18.7,21.2,745.7
+Supervised,ExtraTrees,single,1.0,1.0,1.0,0.9426,0.9582,0.9442,0.0574,0.9595,0,0,36622.7,52441.69,26.2,232.1,63.49,26.6,105.8
+Supervised,RF+XGB,ensemble,1.0,1.0,1.0,0.9293,0.9467,0.93,0.0707,0.9499,20,0,0.0,0.0,0.0,0.0,0.0,N/A,N/A
+Supervised,RF+LGB,ensemble,1.0,1.0,1.0,0.9314,0.9511,0.9308,0.0686,0.9512,20,0,0.0,0.0,0.0,0.0,0.0,N/A,N/A
+Supervised,XGB+LGB,ensemble,1.0,1.0,1.0,0.9279,0.9495,0.9275,0.0721,0.9488,20,0,0.0,0.0,0.0,0.0,0.0,N/A,N/A
+Supervised,Best2ModelEnsemble,ensemble,1.0,1.0,1.0,0.9258,0.9447,0.9267,0.0742,0.9475,20,0,0.0,0.0,0.0,0.0,0.0,N/A,N/A
+Anomaly,IsolationForest,Unsupervised/Semi-Supervised,0.9988,0.9975,1.0,0.9123,0.8431,0.994,0.0865,0.9556,186,6,7811.9,12873.61,121.5,1519.5,46.28,N/A,N/A
+Anomaly,OneClassSVM,Unsupervised/Semi-Supervised,1.0,1.0,1.0,0.9066,0.8326,0.995,0.0934,0.9533,200,5,191.2,510.01,4677.7,20.4,8.51,N/A,N/A
+Anomaly,LocalOutlierFactor,Unsupervised/Semi-Supervised,1.0,1.0,1.0,0.8395,0.8127,0.868,0.1605,0.9198,200,132,24862.5,37908.6,35.6,143.4,35.4,N/A,N/A
+Anomaly,Autoencoder,Unsupervised/Semi-Supervised,1.0,1.0,1.0,0.8686,0.8235,0.919,0.1314,0.9343,197,81,185.0,574.4,4662.5,91.4,14.27,51.8,13.9

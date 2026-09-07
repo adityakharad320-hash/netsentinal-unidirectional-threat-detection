@@ -161,9 +161,9 @@ class StreamingPipelineOrchestrator:
         )
         return report
 
-    async def process_single_event(self, event: NormalizedBaseEvent) -> Optional[SecurityAlert_v2]:
+    def process_event_sync(self, event: NormalizedBaseEvent) -> Optional[SecurityAlert_v2]:
         """
-        Processes a single normalized telemetry event incrementally with latency instrumentation.
+        Synchronous single-event processor for high-speed streaming pipelines and benchmarks.
         """
         t_e2e_start = time.perf_counter_ns()
         self._processed_events += 1
@@ -204,11 +204,21 @@ class StreamingPipelineOrchestrator:
         e2e_ms = (t_e2e_end - t_e2e_start) / 1_000_000.0
         self._e2e_latencies.append(e2e_ms)
 
-        # Broadcast via WebSocket callback if new alert
-        if is_new and self.broadcast_callback:
-            if asyncio.iscoroutinefunction(self.broadcast_callback):
-                await self.broadcast_callback(alert)
-            else:
+        if is_new and self.broadcast_callback and not asyncio.iscoroutinefunction(self.broadcast_callback):
+            try:
                 self.broadcast_callback(alert)
+            except Exception as e:
+                logger.warning(f"Error in broadcast callback: {e}")
 
+        return alert
+
+    process_event = process_event_sync
+
+    async def process_single_event(self, event: NormalizedBaseEvent) -> Optional[SecurityAlert_v2]:
+        """
+        Async entrypoint for single event processing, maintaining WebSocket broadcast compatibility.
+        """
+        alert = self.process_event_sync(event)
+        if alert and self.broadcast_callback and asyncio.iscoroutinefunction(self.broadcast_callback):
+            await self.broadcast_callback(alert)
         return alert

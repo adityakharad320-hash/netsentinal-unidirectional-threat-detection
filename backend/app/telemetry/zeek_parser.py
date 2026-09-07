@@ -218,6 +218,7 @@ class ZeekLogParser:
                 resumed=bool(row.get("resumed", False)),
                 ja3=row.get("ja3"),
                 ja3s=row.get("ja3s"),
+                ja4=row.get("ja4"),
                 validation_status=row.get("validation_status"),
                 subject=row.get("subject"),
                 issuer=row.get("issuer")
