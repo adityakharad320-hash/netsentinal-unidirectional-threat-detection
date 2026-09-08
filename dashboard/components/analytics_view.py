@@ -1,17 +1,38 @@
 """
-Traffic Analysis & Threat Analytics Charts Component.
+Traffic Analysis & Threat Analytics Charts Component for NetSentinel.
+Editorial SaaS styled visualizations for severity, attribution, and anomaly distributions.
 """
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from typing import List, Dict, Any
+from dashboard.theme import get_plotly_layout, get_theme_tokens
 
-def render_analytics(alerts: List[Dict[str, Any]], stats: Dict[str, Any]):
-    st.subheader("Network Security Telemetry & Anomaly Analytics")
+
+def render_analytics(alerts: List[Dict[str, Any]], stats: Dict[str, Any], theme_mode: str = "light"):
+    t = get_theme_tokens(theme_mode)
+    is_dark = str(theme_mode).lower() == "dark"
+
+    st.markdown("## Security Telemetry & Anomaly Analytics")
+    st.markdown(
+        f"<div style='font-size:13px; color:{t['text_muted']}; margin-top:-4px; margin-bottom:18px;'>"
+        "Statistical telemetry distributions, risk severity breakdowns, and Isolation Forest score separation."
+        "</div>",
+        unsafe_allow_html=True
+    )
 
     if not alerts:
-        st.info("No alert telemetry available for analytics.")
+        st.markdown(
+            f"""
+            <div class="editorial-callout">
+                <div style="font-size:13px; font-weight:600; color:{t['text_main']};">NO TELEMETRY AVAILABLE</div>
+                <div style="font-size:12px; color:{t['text_muted']}; margin-top:4px;">
+                    No security alerts have been generated yet. Use the Interactive Replay Simulator to stream synthetic PCAP traces.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         return
 
     df = pd.DataFrame(alerts)
@@ -28,17 +49,17 @@ def render_analytics(alerts: List[Dict[str, Any]], stats: Dict[str, Any]):
             values="Alert Count",
             color="Severity",
             color_discrete_map={
-                "CRITICAL": "#e74c3c",
-                "HIGH": "#e67e22",
-                "MEDIUM": "#f39c12",
-                "LOW": "#3498db",
-                "INFO": "#2ecc71"
+                "CRITICAL": "#DC2626",
+                "HIGH": "#D97706",
+                "MEDIUM": "#2563EB",
+                "LOW": "#059669",
+                "INFO": "#71717A"
             },
             title="Alerts by Risk Severity",
-            hole=0.4
+            hole=0.60
         )
-        fig_sev.update_layout(height=320, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig_sev, width='stretch')
+        fig_sev.update_layout(**get_plotly_layout(theme_mode, height=300))
+        st.plotly_chart(fig_sev, use_container_width=True)
 
     with c2:
         # Detection Methods Breakdown
@@ -49,20 +70,26 @@ def render_analytics(alerts: List[Dict[str, Any]], stats: Dict[str, Any]):
             x="Detection Engine",
             y="Count",
             color="Detection Engine",
+            color_discrete_sequence=["#18181B" if not is_dark else "#FAFAFA", "#52525B", "#71717A", "#A1A1AA"],
             title="Detection Attribution by Engine Type"
         )
-        fig_meth.update_layout(height=320, showlegend=False, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig_meth, width='stretch')
+        layout_meth = get_plotly_layout(theme_mode, height=300)
+        layout_meth["showlegend"] = False
+        fig_meth.update_layout(**layout_meth)
+        st.plotly_chart(fig_meth, use_container_width=True)
 
     # Anomaly Score Distribution Histogram
-    st.markdown("#### Isolation Forest Anomaly Score Distribution")
+    st.markdown("### Isolation Forest Anomaly Score Distribution")
     if "anomaly_score" in df.columns:
         fig_hist = px.histogram(
             df,
             x="anomaly_score",
             color="threat_class",
             nbins=30,
-            title="Isolation Forest Decision Function Separation Across Threats"
+            title="Isolation Forest Decision Function Separation (Lower = More Anomalous)"
         )
-        fig_hist.update_layout(height=300, margin=dict(l=20, r=20, t=40, b=20), xaxis_title="Raw IF Score (Lower = More Anomalous)")
-        st.plotly_chart(fig_hist, width='stretch')
+        layout_hist = get_plotly_layout(theme_mode, height=300)
+        layout_hist["xaxis_title"] = "Raw Decision Function Score"
+        layout_hist["yaxis_title"] = "Event Count"
+        fig_hist.update_layout(**layout_hist)
+        st.plotly_chart(fig_hist, use_container_width=True)
