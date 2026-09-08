@@ -134,7 +134,9 @@ class StreamingPipelineOrchestrator:
         pcap_path: Path,
         staging_dir: Path,
         speed_factor: Optional[float] = None,
-        stop_event: Optional[Any] = None
+        stop_event: Optional[Any] = None,
+        *args,
+        **kwargs
     ) -> PipelinePerformanceReport:
         """
         Executes real streaming replay on a PCAP and produces actual performance metrics.

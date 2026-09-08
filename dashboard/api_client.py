@@ -241,12 +241,10 @@ class DashboardApiClient:
             else:
                 return {"status": "ERROR", "message": f"Unknown scenario {scenario_type}"}
 
-            report = asyncio.run(
-                self.orchestrator.run_pipeline_on_pcap(
-                    pcap_path=pcap_path,
-                    staging_dir=DATA_DIR / "api_pipeline_staging",
-                    speed_factor=speed_factor if speed_factor > 0 else None
-                )
+            report = self._run_orchestrator(
+                pcap_path=pcap_path,
+                staging_dir=DATA_DIR / "api_pipeline_staging",
+                speed_factor=speed_factor
             )
             return {
                 "status": "COMPLETED",
@@ -258,6 +256,30 @@ class DashboardApiClient:
         except Exception as e:
             logger.error(f"trigger_simulation in-process error: {e}", exc_info=True)
             return {"status": "ERROR", "message": str(e)}
+
+    def _run_orchestrator(self, pcap_path: Path, staging_dir: Path, speed_factor: float = 0.0) -> Any:
+        """Invokes orchestrator with signature introspection and graceful backward compatibility."""
+        import inspect
+        sig = inspect.signature(self.orchestrator.run_pipeline_on_pcap)
+        kwargs = {}
+        if "speed_factor" in sig.parameters:
+            kwargs["speed_factor"] = speed_factor if speed_factor > 0 else None
+
+        try:
+            return asyncio.run(
+                self.orchestrator.run_pipeline_on_pcap(
+                    pcap_path,
+                    staging_dir,
+                    **kwargs
+                )
+            )
+        except TypeError:
+            return asyncio.run(
+                self.orchestrator.run_pipeline_on_pcap(
+                    pcap_path,
+                    staging_dir
+                )
+            )
 
     def trigger_replay(self, pcap_filename: str, speed_factor: float = 0.0) -> Dict[str, Any]:
         """
@@ -287,12 +309,10 @@ class DashboardApiClient:
             if not pcap_path.exists():
                 return {"status": "UNAVAILABLE", "message": f"PCAP sample not found: {pcap_filename}"}
 
-            report = asyncio.run(
-                self.orchestrator.run_pipeline_on_pcap(
-                    pcap_path=pcap_path,
-                    staging_dir=DATA_DIR / "api_pipeline_staging",
-                    speed_factor=speed_factor if speed_factor > 0 else None
-                )
+            report = self._run_orchestrator(
+                pcap_path=pcap_path,
+                staging_dir=DATA_DIR / "api_pipeline_staging",
+                speed_factor=speed_factor
             )
             return {
                 "status": "COMPLETED",
