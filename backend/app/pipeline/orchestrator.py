@@ -133,14 +133,14 @@ class StreamingPipelineOrchestrator:
         self,
         pcap_path: Path,
         staging_dir: Path,
-        speed_factor: Optional[float] = None,
-        stop_event: Optional[Any] = None,
-        *args,
         **kwargs
     ) -> PipelinePerformanceReport:
         """
         Executes real streaming replay on a PCAP and produces actual performance metrics.
+        Accepts speed_factor and stop_event via **kwargs for forward/backward compatibility.
         """
+        speed_factor: Optional[float] = kwargs.get("speed_factor", None)
+        stop_event: Optional[Any] = kwargs.get("stop_event", None)
         self._feat_latencies.clear()
         self._infer_latencies.clear()
         self._alert_latencies.clear()

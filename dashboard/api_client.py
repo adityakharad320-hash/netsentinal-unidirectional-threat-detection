@@ -258,28 +258,21 @@ class DashboardApiClient:
             return {"status": "ERROR", "message": str(e)}
 
     def _run_orchestrator(self, pcap_path: Path, staging_dir: Path, speed_factor: float = 0.0) -> Any:
-        """Invokes orchestrator with signature introspection and graceful backward compatibility."""
-        import inspect
-        sig = inspect.signature(self.orchestrator.run_pipeline_on_pcap)
-        kwargs = {}
-        if "speed_factor" in sig.parameters:
-            kwargs["speed_factor"] = speed_factor if speed_factor > 0 else None
-
+        """Safe orchestrator invocation — passes speed_factor via **kwargs to avoid any TypeError."""
+        kw = {"speed_factor": speed_factor if speed_factor > 0 else None}
         try:
             return asyncio.run(
-                self.orchestrator.run_pipeline_on_pcap(
-                    pcap_path,
-                    staging_dir,
-                    **kwargs
-                )
+                self.orchestrator.run_pipeline_on_pcap(pcap_path, staging_dir, **kw)
             )
         except TypeError:
-            return asyncio.run(
-                self.orchestrator.run_pipeline_on_pcap(
-                    pcap_path,
-                    staging_dir
+            # Ultimate fallback: old signature with no extra args at all
+            try:
+                return asyncio.run(
+                    self.orchestrator.run_pipeline_on_pcap(pcap_path, staging_dir)
                 )
-            )
+            except Exception as e:
+                logger.error(f"_run_orchestrator fallback also failed: {e}", exc_info=True)
+                raise
 
     def trigger_replay(self, pcap_filename: str, speed_factor: float = 0.0) -> Dict[str, Any]:
         """
