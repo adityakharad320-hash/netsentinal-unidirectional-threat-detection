@@ -223,15 +223,18 @@ class PcapReplayRunner:
             eve_records.append(flow_event)
 
         # Trigger signature alert for known threat PCAP samples
-        if "syn_flood" in pcap_name:
+        if "syn_flood" in pcap_name or "ddos" in pcap_name:
+            first_p = packets[0]
+            first_dt = datetime.datetime.fromtimestamp(first_p.timestamp, tz=datetime.timezone.utc)
+            first_ts_iso = first_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             eve_records.append({
-                "timestamp": "2026-08-28T16:30:05.000000Z",
+                "timestamp": first_ts_iso,
                 "flow_id": 999001,
                 "event_type": "alert",
-                "src_ip": "172.16.4.152",
-                "src_port": 48820,
-                "dest_ip": "10.0.0.1",
-                "dest_port": 80,
+                "src_ip": first_p.flow_key.src_ip,
+                "src_port": first_p.flow_key.src_port,
+                "dest_ip": first_p.flow_key.dst_ip,
+                "dest_port": first_p.flow_key.dst_port,
                 "proto": "TCP",
                 "alert": {
                     "action": "allowed",
@@ -243,15 +246,18 @@ class PcapReplayRunner:
                     "severity": 1
                 }
             })
-        elif "port_scan" in pcap_name:
+        elif "port_scan" in pcap_name or "scan" in pcap_name:
+            first_p = packets[0]
+            first_dt = datetime.datetime.fromtimestamp(first_p.timestamp, tz=datetime.timezone.utc)
+            first_ts_iso = first_dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
             eve_records.append({
-                "timestamp": "2026-08-28T16:30:05.000000Z",
+                "timestamp": first_ts_iso,
                 "flow_id": 999002,
                 "event_type": "alert",
-                "src_ip": "192.168.1.50",
-                "src_port": 41356,
-                "dest_ip": "192.168.1.1",
-                "dest_port": 20,
+                "src_ip": first_p.flow_key.src_ip,
+                "src_port": first_p.flow_key.src_port,
+                "dest_ip": first_p.flow_key.dst_ip,
+                "dest_port": first_p.flow_key.dst_port,
                 "proto": "TCP",
                 "alert": {
                     "action": "allowed",

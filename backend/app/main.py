@@ -222,6 +222,7 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
     
     scen = req.scenario_type.upper().replace(" ", "_")
     p = req.parameters
+    now_t = float(p.get("base_t")) if p.get("base_t") is not None else time.time()
     
     if "SYN_FLOOD" in scen or "DDOS" in scen:
         pcap_path = ControlledTrafficGenerator.generate_syn_flood(
@@ -230,7 +231,8 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
             spoofed_sources=int(p.get("spoofed_sources", 50)),
             target_ip=str(p.get("target_ip", "10.0.0.1")),
             target_port=int(p.get("target_port", 80)),
-            rate_pps=int(p.get("rate_pps", 1000))
+            rate_pps=int(p.get("rate_pps", 1000)),
+            base_t=now_t
         )
     elif "PORT_SCAN" in scen or "SCAN" in scen:
         pcap_path = ControlledTrafficGenerator.generate_port_scan(
@@ -239,7 +241,8 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
             scanner_ip=str(p.get("scanner_ip", "192.168.1.50")),
             target_ip=str(p.get("target_ip", "192.168.1.1")),
             start_port=int(p.get("start_port", 1)),
-            speed_pps=int(p.get("speed_pps", 100))
+            speed_pps=int(p.get("speed_pps", 100)),
+            base_t=now_t
         )
     elif "DGA" in scen or "DNS" in scen:
         pcap_path = ControlledTrafficGenerator.generate_dga_dns_tunnel(
@@ -248,7 +251,8 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
             query_type=str(p.get("query_type", "TXT")),
             resolver_ip=str(p.get("resolver_ip", "8.8.8.8")),
             src_ip=str(p.get("src_ip", "192.168.1.75")),
-            high_entropy=bool(p.get("high_entropy", True))
+            high_entropy=bool(p.get("high_entropy", True)),
+            base_t=now_t
         )
     elif "C2" in scen or "BEACON" in scen:
         pcap_path = ControlledTrafficGenerator.generate_c2_beaconing(
@@ -257,7 +261,8 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
             interval_sec=float(p.get("interval_sec", 1.0)),
             jitter=float(p.get("jitter", 0.02)),
             c2_ip=str(p.get("c2_ip", "198.51.100.42")),
-            infected_host=str(p.get("infected_host", "10.0.5.12"))
+            infected_host=str(p.get("infected_host", "10.0.5.12")),
+            base_t=now_t
         )
     elif "EXFIL" in scen or "DATA" in scen:
         pcap_path = ControlledTrafficGenerator.generate_data_exfiltration(
@@ -265,13 +270,15 @@ async def trigger_simulation(req: SimulationRequest, background_tasks: Backgroun
             chunk_count=int(p.get("chunk_count", 40)),
             chunk_size=int(p.get("chunk_size", 1400)),
             exfil_ip=str(p.get("exfil_ip", "203.0.113.50")),
-            src_ip=str(p.get("src_ip", "192.168.1.105"))
+            src_ip=str(p.get("src_ip", "192.168.1.105")),
+            base_t=now_t
         )
     elif "BENIGN" in scen:
         pcap_path = ControlledTrafficGenerator.generate_benign(
             sim_dir / "sim_benign.pcap",
             num_domains=int(p.get("num_domains", 4)),
-            num_sessions=int(p.get("num_sessions", 5))
+            num_sessions=int(p.get("num_sessions", 5)),
+            base_t=now_t
         )
     else:
         raise HTTPException(status_code=400, detail=f"Unknown scenario_type '{req.scenario_type}'.")

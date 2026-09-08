@@ -180,6 +180,7 @@ class DashboardApiClient:
             sim_dir = SAMPLES_DIR / "dynamic_simulations"
             sim_dir.mkdir(parents=True, exist_ok=True)
             scen = scenario_type.upper().replace(" ", "_")
+            now_t = float(params.get("base_t")) if params.get("base_t") is not None else time.time()
 
             if "SYN_FLOOD" in scen or "DDOS" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_syn_flood(
@@ -188,7 +189,8 @@ class DashboardApiClient:
                     spoofed_sources=int(params.get("spoofed_sources", 50)),
                     target_ip=str(params.get("target_ip", "10.0.0.1")),
                     target_port=int(params.get("target_port", 80)),
-                    rate_pps=int(params.get("rate_pps", 1000))
+                    rate_pps=int(params.get("rate_pps", 1000)),
+                    base_t=now_t
                 )
             elif "PORT_SCAN" in scen or "SCAN" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_port_scan(
@@ -197,7 +199,8 @@ class DashboardApiClient:
                     scanner_ip=str(params.get("scanner_ip", "192.168.1.50")),
                     target_ip=str(params.get("target_ip", "192.168.1.1")),
                     start_port=int(params.get("start_port", 1)),
-                    speed_pps=int(params.get("speed_pps", 100))
+                    speed_pps=int(params.get("speed_pps", 100)),
+                    base_t=now_t
                 )
             elif "DGA" in scen or "DNS" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_dga_dns_tunnel(
@@ -206,7 +209,8 @@ class DashboardApiClient:
                     query_type=str(params.get("query_type", "TXT")),
                     resolver_ip=str(params.get("resolver_ip", "8.8.8.8")),
                     src_ip=str(params.get("src_ip", "192.168.1.75")),
-                    high_entropy=bool(params.get("high_entropy", True))
+                    high_entropy=bool(params.get("high_entropy", True)),
+                    base_t=now_t
                 )
             elif "C2" in scen or "BEACON" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_c2_beaconing(
@@ -215,7 +219,8 @@ class DashboardApiClient:
                     interval_sec=float(params.get("interval_sec", 1.0)),
                     jitter=float(params.get("jitter", 0.02)),
                     c2_ip=str(params.get("c2_ip", "198.51.100.42")),
-                    infected_host=str(params.get("infected_host", "10.0.5.12"))
+                    infected_host=str(params.get("infected_host", "10.0.5.12")),
+                    base_t=now_t
                 )
             elif "EXFIL" in scen or "DATA" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_data_exfiltration(
@@ -223,13 +228,15 @@ class DashboardApiClient:
                     chunk_count=int(params.get("chunk_count", 40)),
                     chunk_size=int(params.get("chunk_size", 1400)),
                     exfil_ip=str(params.get("exfil_ip", "203.0.113.50")),
-                    src_ip=str(params.get("src_ip", "192.168.1.105"))
+                    src_ip=str(params.get("src_ip", "192.168.1.105")),
+                    base_t=now_t
                 )
             elif "BENIGN" in scen:
                 pcap_path = ControlledTrafficGenerator.generate_benign(
                     sim_dir / "sim_benign.pcap",
                     num_domains=int(params.get("num_domains", 4)),
-                    num_sessions=int(params.get("num_sessions", 5))
+                    num_sessions=int(params.get("num_sessions", 5)),
+                    base_t=now_t
                 )
             else:
                 return {"status": "ERROR", "message": f"Unknown scenario {scenario_type}"}
@@ -329,7 +336,8 @@ class DashboardApiClient:
     def load_demo_scenarios(self):
         """Initial baseline load of controlled scenarios."""
         try:
-            for scen in ["BENIGN", "SYN_FLOOD", "PORT_SCAN", "DGA_DNS_TUNNEL", "C2_BEACONING", "DATA_EXFILTRATION"]:
-                self.trigger_simulation(scen, speed_factor=0.0)
+            base_t = time.time() - 300.0
+            for i, scen in enumerate(["BENIGN", "SYN_FLOOD", "PORT_SCAN", "DGA_DNS_TUNNEL", "C2_BEACONING", "DATA_EXFILTRATION"]):
+                self.trigger_simulation(scen, parameters={"base_t": base_t + (i * 35.0)}, speed_factor=0.0)
         except Exception as e:
             logger.error(f"load_demo_scenarios error: {e}", exc_info=True)

@@ -34,7 +34,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 1: Normal bidirectional DNS and HTTPS web traffic."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         t = base_t
         
         sample_domains = [
@@ -107,7 +107,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 2: Distributed Volumetric SYN Flood targeting victim server."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         dt = 1.0 / max(10, rate_pps)
         num_sources = max(1, min(spoofed_sources, count))
         
@@ -136,7 +136,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 3: Vertical Reconnaissance Port Scan probing ports sequentially."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         dt = 1.0 / max(10, speed_pps)
         
         for i in range(ports_count):
@@ -164,7 +164,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 4: Algorithmic high-entropy TXT/A record DNS tunnelling queries."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         
         for i in range(count):
             t = base_t + (i * 0.20)
@@ -196,7 +196,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 5: Periodic interval C2 heartbeats with controlled jitter."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         
         for i in range(count):
             t_jitter = random.uniform(-jitter, jitter) if jitter > 0 else 0.0
@@ -224,7 +224,7 @@ class ControlledTrafficGenerator:
     ) -> Path:
         """Scenario 6: Asymmetric heavy outbound TCP payload upload to external IP."""
         pkts = []
-        base_t = base_t or 1724832000.0
+        base_t = time.time() if base_t is None else base_t
         
         # 1. Handshake
         t = base_t
