@@ -114,10 +114,27 @@ class StreamingPipelineOrchestrator:
             max_ms=round(float(np.max(np_arr)), 4)
         )
 
+    def reset(self):
+        """Resets the tracker state, event accumulators, and latency buffers."""
+        if hasattr(self.tracker, "active_flows"):
+            self.tracker.active_flows.clear()
+        gt = getattr(self.tracker, "graph_tracker", None)
+        if gt:
+            for attr in ("src_to_dsts", "src_to_ports", "dst_to_srcs", "src_fanout", "src_dst_pairs", "dst_src_counts", "src_event_times"):
+                if hasattr(gt, attr):
+                    getattr(gt, attr).clear()
+        self._feat_latencies.clear()
+        self._infer_latencies.clear()
+        self._alert_latencies.clear()
+        self._e2e_latencies.clear()
+        self._processed_events = 0
+
     async def run_pipeline_on_pcap(
         self,
         pcap_path: Path,
-        staging_dir: Path
+        staging_dir: Path,
+        speed_factor: Optional[float] = None,
+        stop_event: Optional[Any] = None
     ) -> PipelinePerformanceReport:
         """
         Executes real streaming replay on a PCAP and produces actual performance metrics.
@@ -134,9 +151,27 @@ class StreamingPipelineOrchestrator:
 
         streamer = TelemetryStreamer(pcap_out)
         self._start_time = time.perf_counter()
+        first_event_ts: Optional[float] = None
+        start_wall_time = time.perf_counter()
 
         # 2. Producer: stream events line-by-line into the event stream channel
         for event in streamer.stream_all_events():
+            if stop_event is not None:
+                if (hasattr(stop_event, "is_set") and stop_event.is_set()) or stop_event is True:
+                    logger.info(f"Replay for {pcap_path.name} stopped early by operator signal.")
+                    break
+
+            # Rate throttling based on speed factor (e.g. 1.0 = real-time, 2.0 = 2x speed)
+            if speed_factor is not None and speed_factor > 0 and speed_factor < 50.0:
+                if first_event_ts is None:
+                    first_event_ts = event.timestamp
+                else:
+                    target_wall_elapsed = (event.timestamp - first_event_ts) / speed_factor
+                    actual_wall_elapsed = time.perf_counter() - start_wall_time
+                    delay = target_wall_elapsed - actual_wall_elapsed
+                    if delay > 0.001:
+                        await asyncio.sleep(min(delay, 0.05))
+
             await self.process_single_event(event)
 
         self._end_time = time.perf_counter()

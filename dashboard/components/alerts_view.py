@@ -87,11 +87,11 @@ def render_alerts_view(alerts: List[Dict[str, Any]], theme_mode: str = "light") 
             "Alert ID": a.get("alert_id"),
             "Timestamp (UTC)": a.get("timestamp_iso", "")[:19].replace("T", " "),
             "Threat Category": a.get("threat_class"),
-            "Severity": a.get("severity"),
-            "Confidence": f"{a.get('confidence_score', 0.0) * 100:.1f}%",
-            "Flow 5-Tuple": a.get("flow_id"),
+            "Severity": a.get("severity") or "LOW",
+            "Confidence": f"{float(a.get('confidence_score') or 0.0) * 100:.1f}%",
+            "Flow 5-Tuple": a.get("flow_id") or "—",
             "Instances": a.get("occurrence_count", 1),
-            "Detection Engine": a.get("detection_method")
+            "Detection Engine": a.get("detection_method") or "—"
         })
 
     df = pd.DataFrame(table_rows)

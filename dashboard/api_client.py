@@ -1,30 +1,29 @@
 """
 Resilient Backend Client for Streamlit Dashboard.
-Falls back to direct in-process engines when FastAPI server is offline.
+Communicates with FastAPI backend server or executes directly in-process
+using the StreamingPipelineOrchestrator when FastAPI server is offline.
 """
 import os
 import sys
+import asyncio
 import logging
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# Bulletproof path setup for Streamlit Cloud and Python 3.14
+# Path setup
 _HERE = Path(__file__).resolve()
 _ROOT = _HERE.parent.parent          # project root
 _BACKEND = _ROOT / "backend"
 _DASHBOARD = _HERE.parent            # dashboard/
 
-# Strip dashboard dir from sys.path so app.py doesn't shadow backend/app package
 sys.path = [p for p in sys.path if Path(p).resolve() != _DASHBOARD]
 
-# Ensure backend and root are at top of sys.path
 for p in [str(_BACKEND), str(_ROOT)]:
     if p in sys.path:
         sys.path.remove(p)
     sys.path.insert(0, p)
 
-# If sys.modules['app'] is not a package with __path__, remove it so backend/app package loads
 if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
     del sys.modules["app"]
 
@@ -33,6 +32,7 @@ logger = logging.getLogger("dashboard_client")
 # Lazy singletons
 _engine = None
 _hybrid = None
+_orchestrator = None
 
 def _get_engine():
     global _engine
@@ -56,6 +56,22 @@ def _get_hybrid():
         _hybrid = HybridInferenceEngine()
     return _hybrid
 
+def _get_orchestrator():
+    global _orchestrator
+    if _orchestrator is None:
+        if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
+            del sys.modules["app"]
+        try:
+            from app.main import global_orchestrator
+            _orchestrator = global_orchestrator
+        except Exception:
+            from app.pipeline.orchestrator import StreamingPipelineOrchestrator
+            _orchestrator = StreamingPipelineOrchestrator(
+                alert_engine=_get_engine(),
+                hybrid_engine=_get_hybrid()
+            )
+    return _orchestrator
+
 
 class DashboardApiClient:
     def __init__(self, base_url: Optional[str] = None):
@@ -68,6 +84,10 @@ class DashboardApiClient:
     @property
     def hybrid(self):
         return _get_hybrid()
+
+    @property
+    def orchestrator(self):
+        return _get_orchestrator()
 
     def get_system_status(self) -> Dict[str, Any]:
         try:
@@ -93,7 +113,11 @@ class DashboardApiClient:
             import httpx
             resp = httpx.get(f"{self.base_url}/alerts?limit={limit}", timeout=1.5)
             if resp.status_code == 200:
-                return resp.json().get("alerts", [])
+                data = resp.json()
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict):
+                    return data.get("alerts", [])
         except Exception:
             pass
         alerts = self.engine.get_alerts(limit=limit)
@@ -120,79 +144,192 @@ class DashboardApiClient:
             pass
         return self.engine.get_statistics().model_dump()
 
-    def _stream_staging_dir(self, staging_dir: Path) -> Dict[str, Any]:
-        from app.telemetry.telemetry_streamer import TelemetryStreamer
-        from app.telemetry.telemetry_flow_tracker import StreamingTelemetryTracker
-        from app.telemetry.telemetry_feature_extractor import TelemetryFeatureExtractor
-
-        t0 = time.perf_counter()
-        streamer = TelemetryStreamer(staging_dir)
-        tracker = StreamingTelemetryTracker()
-        evt_count = 0
-
-        for event in streamer.stream_all_events():
-            evt_count += 1
-            state = tracker.process_event(event)
-            fv = TelemetryFeatureExtractor.extract_features(state, tracker)
-            fusion = self.hybrid.predict(fv)
-            self.engine.process_detection(fv, fusion)
-
-        dur = max(0.01, time.perf_counter() - t0)
-        return {
-            "total_events_processed": evt_count,
-            "total_flows_tracked": len(tracker.active_flows),
-            "events_per_second": round(evt_count / dur, 1),
-            "duration_seconds": round(dur, 3),
-        }
-
-    def load_demo_scenarios(self):
-        try:
-            from app.config import DATA_DIR
-            staging_root = DATA_DIR / "controlled_replay_staging"
-            if not staging_root.exists():
-                logger.warning(f"Staging root not found: {staging_root}")
-                return
-            for scenario in [
-                "syn_flood", "port_scan", "dga_dns_tunnel",
-                "c2_beaconing", "data_exfiltration", "benign_traffic"
-            ]:
-                s_dir = staging_root / scenario
-                if s_dir.exists():
-                    self._stream_staging_dir(s_dir)
-        except Exception as e:
-            logger.error(f"load_demo_scenarios error: {e}", exc_info=True)
-
-    def trigger_replay(self, pcap_filename: str) -> Dict[str, Any]:
+    def trigger_simulation(
+        self,
+        scenario_type: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        speed_factor: float = 0.0
+    ) -> Dict[str, Any]:
+        """
+        Executes a real simulation with custom attack parameters through the full pipeline.
+        """
+        params = parameters or {}
+        # 1. Try FastAPI REST endpoint
         try:
             import httpx
             resp = httpx.post(
-                f"{self.base_url}/pipeline/replay",
-                json={"pcap_filename": pcap_filename},
-                timeout=2.0
+                f"{self.base_url}/pipeline/simulate",
+                json={
+                    "scenario_type": scenario_type,
+                    "parameters": params,
+                    "speed_factor": speed_factor,
+                    "sync_mode": True
+                },
+                timeout=30.0
             )
             if resp.status_code == 200:
                 return resp.json()
         except Exception:
             pass
 
-        stem = pcap_filename.replace(".pcap", "")
+        # 2. Fallback: Execute full StreamingPipelineOrchestrator in-process
         try:
-            from app.config import DATA_DIR
-            staging_dir = DATA_DIR / "controlled_replay_staging" / stem
-            if not staging_dir.exists():
-                return {"status": "UNAVAILABLE", "message": f"Staging dir not found: {staging_dir}"}
+            from app.config import SAMPLES_DIR, DATA_DIR
+            from app.utils.traffic_scenarios import ControlledTrafficGenerator
 
-            metrics = self._stream_staging_dir(staging_dir)
+            sim_dir = SAMPLES_DIR / "dynamic_simulations"
+            sim_dir.mkdir(parents=True, exist_ok=True)
+            scen = scenario_type.upper().replace(" ", "_")
+
+            if "SYN_FLOOD" in scen or "DDOS" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_syn_flood(
+                    sim_dir / "sim_syn_flood.pcap",
+                    count=int(params.get("count", 500)),
+                    spoofed_sources=int(params.get("spoofed_sources", 50)),
+                    target_ip=str(params.get("target_ip", "10.0.0.1")),
+                    target_port=int(params.get("target_port", 80)),
+                    rate_pps=int(params.get("rate_pps", 1000))
+                )
+            elif "PORT_SCAN" in scen or "SCAN" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_port_scan(
+                    sim_dir / "sim_port_scan.pcap",
+                    ports_count=int(params.get("ports_count", 100)),
+                    scanner_ip=str(params.get("scanner_ip", "192.168.1.50")),
+                    target_ip=str(params.get("target_ip", "192.168.1.1")),
+                    start_port=int(params.get("start_port", 1)),
+                    speed_pps=int(params.get("speed_pps", 100))
+                )
+            elif "DGA" in scen or "DNS" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_dga_dns_tunnel(
+                    sim_dir / "sim_dga_dns_tunnel.pcap",
+                    count=int(params.get("count", 8)),
+                    query_type=str(params.get("query_type", "TXT")),
+                    resolver_ip=str(params.get("resolver_ip", "8.8.8.8")),
+                    src_ip=str(params.get("src_ip", "192.168.1.75")),
+                    high_entropy=bool(params.get("high_entropy", True))
+                )
+            elif "C2" in scen or "BEACON" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_c2_beaconing(
+                    sim_dir / "sim_c2_beaconing.pcap",
+                    count=int(params.get("count", 20)),
+                    interval_sec=float(params.get("interval_sec", 1.0)),
+                    jitter=float(params.get("jitter", 0.02)),
+                    c2_ip=str(params.get("c2_ip", "198.51.100.42")),
+                    infected_host=str(params.get("infected_host", "10.0.5.12"))
+                )
+            elif "EXFIL" in scen or "DATA" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_data_exfiltration(
+                    sim_dir / "sim_data_exfiltration.pcap",
+                    chunk_count=int(params.get("chunk_count", 40)),
+                    chunk_size=int(params.get("chunk_size", 1400)),
+                    exfil_ip=str(params.get("exfil_ip", "203.0.113.50")),
+                    src_ip=str(params.get("src_ip", "192.168.1.105"))
+                )
+            elif "BENIGN" in scen:
+                pcap_path = ControlledTrafficGenerator.generate_benign(
+                    sim_dir / "sim_benign.pcap",
+                    num_domains=int(params.get("num_domains", 4)),
+                    num_sessions=int(params.get("num_sessions", 5))
+                )
+            else:
+                return {"status": "ERROR", "message": f"Unknown scenario {scenario_type}"}
+
+            report = asyncio.run(
+                self.orchestrator.run_pipeline_on_pcap(
+                    pcap_path=pcap_path,
+                    staging_dir=DATA_DIR / "api_pipeline_staging",
+                    speed_factor=speed_factor if speed_factor > 0 else None
+                )
+            )
+            return {
+                "status": "COMPLETED",
+                "scenario": scenario_type,
+                "pcap": pcap_path.name,
+                "report": report.model_dump(),
+                "message": f"Simulation for {scenario_type} completed successfully."
+            }
+        except Exception as e:
+            logger.error(f"trigger_simulation in-process error: {e}", exc_info=True)
+            return {"status": "ERROR", "message": str(e)}
+
+    def trigger_replay(self, pcap_filename: str, speed_factor: float = 0.0) -> Dict[str, Any]:
+        """
+        Replays an existing PCAP file from samples through the streaming pipeline.
+        """
+        try:
+            import httpx
+            resp = httpx.post(
+                f"{self.base_url}/pipeline/replay",
+                json={
+                    "pcap_filename": pcap_filename,
+                    "speed_factor": speed_factor,
+                    "sync_mode": True
+                },
+                timeout=30.0
+            )
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        try:
+            from app.config import SAMPLES_DIR, DATA_DIR
+            pcap_path = SAMPLES_DIR / pcap_filename
+            if not pcap_path.exists():
+                pcap_path = SAMPLES_DIR / "dynamic_simulations" / pcap_filename
+            if not pcap_path.exists():
+                return {"status": "UNAVAILABLE", "message": f"PCAP sample not found: {pcap_filename}"}
+
+            report = asyncio.run(
+                self.orchestrator.run_pipeline_on_pcap(
+                    pcap_path=pcap_path,
+                    staging_dir=DATA_DIR / "api_pipeline_staging",
+                    speed_factor=speed_factor if speed_factor > 0 else None
+                )
+            )
             return {
                 "status": "COMPLETED",
                 "pcap": pcap_filename,
-                "report": {
-                    "pcap_name": pcap_filename,
-                    **metrics,
-                    "end_to_end_latency": {"p50_ms": 36.1, "p99_ms": 68.7}
-                },
+                "report": report.model_dump(),
                 "message": f"Replay for {pcap_filename} completed."
             }
         except Exception as e:
-            logger.error(f"trigger_replay error: {e}", exc_info=True)
+            logger.error(f"trigger_replay in-process error: {e}", exc_info=True)
             return {"status": "ERROR", "message": str(e)}
+
+    def reset_pipeline(self) -> Dict[str, Any]:
+        """
+        Resets alert history, deduplication cache, and performance trackers.
+        """
+        try:
+            import httpx
+            resp = httpx.post(f"{self.base_url}/pipeline/reset", timeout=2.0)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        self.engine.reset()
+        self.orchestrator.reset()
+        return {"status": "RESET_SUCCESS", "total_alerts": 0}
+
+    def stop_replay(self) -> Dict[str, Any]:
+        """
+        Signals active streaming replay to stop.
+        """
+        try:
+            import httpx
+            resp = httpx.post(f"{self.base_url}/pipeline/stop", timeout=2.0)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+        return {"status": "STOPPED", "message": "Replay stopped."}
+
+    def load_demo_scenarios(self):
+        """Initial baseline load of controlled scenarios."""
+        try:
+            for scen in ["BENIGN", "SYN_FLOOD", "PORT_SCAN", "DGA_DNS_TUNNEL", "C2_BEACONING", "DATA_EXFILTRATION"]:
+                self.trigger_simulation(scen, speed_factor=0.0)
+        except Exception as e:
+            logger.error(f"load_demo_scenarios error: {e}", exc_info=True)

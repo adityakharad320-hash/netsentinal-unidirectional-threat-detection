@@ -26,10 +26,10 @@ def render_alert_details(alerts: List[Dict[str, Any]], theme_mode: str = "light"
 
     # Top Badges Row
     b1, b2, b3, b4 = st.columns(4)
-    b1.metric("Threat Category", alert.get("threat_class"))
-    b2.metric("Confidence Score", f"{alert.get('confidence_score', 0.0) * 100:.1f}%")
-    b3.metric("Severity Level", alert.get("severity"))
-    b4.metric("Detection Engine", alert.get("detection_method"))
+    b1.metric("Threat Category", alert.get("threat_class") or "UNKNOWN")
+    b2.metric("Confidence Score", f"{float(alert.get('confidence_score') or 0.0) * 100:.1f}%")
+    b3.metric("Severity Level", alert.get("severity") or "INFO")
+    b4.metric("Detection Engine", alert.get("detection_method") or "HYBRID")
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 

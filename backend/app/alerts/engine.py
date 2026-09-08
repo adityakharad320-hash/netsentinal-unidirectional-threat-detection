@@ -316,3 +316,12 @@ class AlertEngine:
                 active_threats_count=active_threats,
                 last_updated_iso=now_iso
             )
+
+    def reset(self):
+        """Resets the alert engine state, active correlations, and counters."""
+        with self._lock:
+            self._alerts.clear()
+            self._alert_lookup.clear()
+            self._active_correlations.clear()
+            self._total_events_processed = 0
+
