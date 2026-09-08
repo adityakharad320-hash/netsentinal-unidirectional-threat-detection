@@ -31,6 +31,7 @@ backend/data/deep_profile_staging/
 backend/data/dash_direct_staging/
 backend/data/pipeline_staging/
 backend/data/staging/
+backend/data/samples/dynamic_simulations/
 *.tmp
 
 # Streamlit
