@@ -137,26 +137,30 @@ def render_overview(stats: Dict[str, Any], alerts: list, system_status: Dict[str
         st.markdown("### Recent Security Detections")
         recent = alerts[:5]
         for a in recent:
-            sev = a.get("severity", "LOW")
+            sev = a.get("severity") or "LOW"
             badge_class = (
                 "badge-critical" if sev == "CRITICAL" else
                 ("badge-high" if sev == "HIGH" else
                 ("badge-medium" if sev == "MEDIUM" else "badge-low"))
             )
-            conf_pct = a.get("confidence_score", 0.0) * 100.0
+            conf_pct = float(a.get("confidence_score") or 0.0) * 100.0
+            threat_class = a.get("threat_class") or "UNKNOWN"
+            flow_id = a.get("flow_id") or "—"
+            detection_method = a.get("detection_method") or "—"
             st.markdown(
                 f"""
                 <div class="editorial-card" style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; margin-bottom:8px;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span class="{badge_class}">{sev}</span>
-                        <span style="font-weight:600; font-size:13px; color:{t['text_main']};">{a.get('threat_class')}</span>
-                        <span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:{t['text_muted']};">{a.get('flow_id')}</span>
+                        <span style="font-weight:600; font-size:13px; color:{t['text_main']};">{threat_class}</span>
+                        <span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:{t['text_muted']};">{flow_id}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:14px;">
                         <span style="font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:600; color:{t['text_main']};">{conf_pct:.1f}% Confidence</span>
-                        <span class="tag-mono">{a.get('detection_method')}</span>
+                        <span class="tag-mono">{detection_method}</span>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+

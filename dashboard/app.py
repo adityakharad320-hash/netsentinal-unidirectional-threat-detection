@@ -26,9 +26,12 @@ if "app" in sys.modules and not hasattr(sys.modules["app"], "__path__"):
 
 import streamlit as st
 
+_favicon_path = DASHBOARD_DIR / "favicon.png"
+_page_icon = str(_favicon_path) if _favicon_path.exists() else "🛡"
+
 st.set_page_config(
     page_title="NetSentinel — Passive Cyber Threat Sensor",
-    page_icon=str(DASHBOARD_DIR / "favicon.png"),
+    page_icon=_page_icon,
     layout="wide",
     initial_sidebar_state="expanded"
 )
