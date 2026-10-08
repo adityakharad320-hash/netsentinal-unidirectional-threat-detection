@@ -1,6 +1,6 @@
 """
 NetSentinel Cybersecurity Threat Detection Dashboard.
-National Technical Research Organisation (NTRO) — Problem Statement 26145.
+Cyber Threat Detection for Unidirectional IP Traffic behind Data Diodes.
 Minimal, Editorial SaaS Design System with Zero Vibe-Coding.
 """
 import sys
@@ -30,7 +30,7 @@ _favicon_path = DASHBOARD_DIR / "favicon.png"
 _page_icon = str(_favicon_path) if _favicon_path.exists() else "🛡"
 
 st.set_page_config(
-    page_title="NetSentinel — Passive Cyber Threat Sensor",
+    page_title="NetSentinel — Cyber Threat Detection for Unidirectional Traffic",
     page_icon=_page_icon,
     layout="wide",
     initial_sidebar_state="expanded"
@@ -54,8 +54,8 @@ if "theme_mode" not in st.session_state:
 st.markdown(
     """
     <head>
-        <meta name="description" content="NetSentinel: AI-Based Cyber Threat Detection in Unidirectional IP Traffic behind Data Diodes. NTRO SIH 26145.">
-        <meta name="keywords" content="cybersecurity, threat detection, data diode, unidirectional traffic, NTRO, SIH26145, machine learning">
+        <meta name="description" content="NetSentinel: AI-Based Cyber Threat Detection in Unidirectional IP Traffic behind Data Diodes.">
+        <meta name="keywords" content="cybersecurity, threat detection, data diode, unidirectional traffic, network security, machine learning">
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2309090B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 22 22 7 12 2'/></svg>">
     </head>
     """,
@@ -74,7 +74,7 @@ st.sidebar.markdown(
     <div style="padding: 4px 0 14px 0; border-bottom: 1px solid {t['border_card']}; margin-bottom: 14px;">
         <div style="font-weight:700; font-size:16px; letter-spacing:-0.03em; color:{t['text_main']};">NETSENTINEL</div>
         <div style="font-size:11px; color:{t['text_muted']}; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-top:2px;">
-            NTRO • PS 26145
+            UNIDIRECTIONAL THREAT SENSOR
         </div>
     </div>
     """,
@@ -191,7 +191,7 @@ st.markdown(
     f"""
     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; color:{t['text_muted']}; font-size:11px;">
         <div>
-            <strong>NetSentinel Threat Detection Platform</strong> • SIH 2026 Problem Statement 26145 • National Technical Research Organisation (NTRO)
+            <strong>NetSentinel Threat Detection Platform</strong> • <a href="https://netsentinel.dev" style="color:inherit; text-decoration:none;">netsentinel.dev</a> • <a href="mailto:contact@netsentinel.dev" style="color:inherit; text-decoration:none;">contact@netsentinel.dev</a>
         </div>
         <div style="font-family:'JetBrains Mono', monospace; font-size:11px;">
             Passive Unidirectional Pipeline • Air-Gapped Operation

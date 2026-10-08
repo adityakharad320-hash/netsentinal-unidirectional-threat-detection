@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: sih_threat_backend
+    container_name: netsentinel_backend
     ports:
       - "8000:8000"
     environment:
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: dashboard/Dockerfile
-    container_name: sih_threat_dashboard
+    container_name: netsentinel_dashboard
     ports:
       - "8501:8501"
     environment:

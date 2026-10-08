@@ -41,7 +41,7 @@ def test_root_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ONLINE"
-    assert data["organization"] == "National Technical Research Organisation (NTRO)"
+    assert data["organization"] == "NetSentinel"
 
 def test_get_alerts_endpoint(client):
     response = client.get("/alerts?limit=10")

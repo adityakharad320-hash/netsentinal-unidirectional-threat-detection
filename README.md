@@ -1,15 +1,15 @@
-# AI-Based Threat Detection in Unidirectional IP Traffic
+# NetSentinel — AI-Based Threat Detection in Unidirectional IP Traffic
 
-[![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20Statement%2026145-blue.svg)](https://sih.gov.in)
-[![Organization](https://img.shields.io/badge/Organization-NTRO-red.svg)](https://ntro.gov.in)
+[![Product](https://img.shields.io/badge/Product-NetSentinel-09090B.svg)](https://netsentinel.dev)
+[![Architecture](https://img.shields.io/badge/Architecture-Data%20Diode%20Air--Gap-blue.svg)]()
 [![Tests](https://img.shields.io/badge/Tests-80%2F80%20Passing-brightgreen.svg)]()
 [![Inference Engine](https://img.shields.io/badge/Inference-ONNX%20Runtime%20SIMD-orange.svg)]()
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
-High-performance, passive, unidirectional cyber threat detection platform engineered for **Smart India Hackathon (SIH) 2026 Problem Statement 26145**, sponsored by the **National Technical Research Organisation (NTRO)**.
+High-performance, passive, unidirectional cyber threat detection platform engineered for high-security, air-gapped network perimeters behind **hardware data diodes**.
 
-Operating strictly behind an isolated **optical hardware data diode**, this system performs real-time threat detection on simplex, receive-only IP network traffic streams with zero transmission capability, sub-millisecond classification, and bounded memory footprint.
+Operating strictly behind an isolated **optical hardware data diode**, NetSentinel performs real-time threat detection on simplex, receive-only IP network traffic streams with zero transmission capability, sub-millisecond classification, and bounded memory footprint.
 
 ---
 
@@ -134,7 +134,7 @@ Evaluated on the exact same CPU-only hardware environment across all 6 realistic
 
 ---
 
-## 10/10 SIH & NTRO Compliance Guarantees
+## 10/10 Unidirectional & Air-Gap Compliance Guarantees
 
 * **Read-Only Ingest**: Stream processing operates via file-descriptor `open(..., 'rb')` iterators and generator streams.
 * **Zero Return Path**: Zero calls to packet transmission sockets (`send()`, `sendto()`).
@@ -185,10 +185,10 @@ cd backend
 python run_controlled_scenarios.py
 ```
 
-### 5. Run the SIH Performance Benchmark
+### 5. Run the Performance Benchmark
 ```powershell
 cd backend
-python run_sih_benchmark.py
+python run_pipeline_benchmark.py
 ```
 
 ### 6. Launch Live Services
@@ -247,5 +247,6 @@ sih-unidirectional-threat-detection/
 
 ---
 
-## License
-MIT License. Developed for Smart India Hackathon 2026 (Problem Statement 26145).
+## License & Support
+MIT License. NetSentinel — [netsentinel.dev](https://netsentinel.dev) • Contact: [contact@netsentinel.dev](mailto:contact@netsentinel.dev)
+

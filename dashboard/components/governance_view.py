@@ -13,7 +13,7 @@ def render_governance(theme_mode: str = "light"):
     st.markdown("## Model Governance & Verifiable AI Metrics")
     st.markdown(
         f"<div style='font-size:13px; color:{t['text_muted']}; margin-top:-4px; margin-bottom:18px;'>"
-        "Empirical training audits, cross-validation metrics, confusion matrices, and documented boundaries for NTRO PS-26145."
+        "Empirical training audits, cross-validation metrics, confusion matrices, and documented boundaries for NetSentinel."
         "</div>",
         unsafe_allow_html=True
     )
@@ -37,7 +37,7 @@ def render_governance(theme_mode: str = "light"):
     st.markdown("### Supervised Model: ONNX Random Forest Classifier")
     st.markdown(
         f"<div style='font-size:12px; color:{t['text_muted']}; margin-top:-4px; margin-bottom:12px;'>"
-        "5-Fold Stratified Cross-Validation on verified SIH 26145 feature vectors."
+        "5-Fold Stratified Cross-Validation on verified 54-D telemetry feature vectors."
         "</div>",
         unsafe_allow_html=True
     )

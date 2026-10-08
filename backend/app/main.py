@@ -1,5 +1,5 @@
 """
-FastAPI Server for SIH 2026 AI Cybersecurity Threat Detection Engine.
+FastAPI Server for NetSentinel AI Cybersecurity Threat Detection Engine.
 
 Endpoints:
   GET   /                   — Health check & system overview
@@ -93,12 +93,12 @@ class SimulationRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting SIH 2026 Threat Detection FastAPI Backend ...")
+    logger.info("Starting NetSentinel Threat Detection FastAPI Backend ...")
     yield
     logger.info("Shutting down FastAPI Backend.")
 
 app = FastAPI(
-    title="SIH 2026 AI Cyber Threat Detection Engine API",
+    title="NetSentinel AI Cyber Threat Detection Engine API",
     description="Passive Unidirectional Network Security Telemetry & AI Threat Detection Platform",
     version="2.0.0",
     lifespan=lifespan
@@ -115,8 +115,8 @@ app.add_middleware(
 @app.get("/", tags=["System"])
 async def root():
     return {
-        "system": "SIH 2026 AI Cyber Threat Detection Engine",
-        "organization": "National Technical Research Organisation (NTRO)",
+        "system": "NetSentinel AI Cyber Threat Detection Engine",
+        "organization": "NetSentinel",
         "version": "2.0.0",
         "status": "ONLINE",
         "mode": "PASSIVE_UNIDIRECTIONAL_INSPECTION",

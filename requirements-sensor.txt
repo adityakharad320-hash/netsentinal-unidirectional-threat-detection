@@ -1,4 +1,4 @@
-# Core Passive Sensor Runtime (Headless Data Diode Sensor - SIH26145)
+# Core Passive Sensor Runtime (Headless Data Diode Sensor - NetSentinel)
 # Zero network listeners, passive CPU-only packet ingestion & ONNX inference.
 # Total wheel footprint: <85 MB, resident memory: <16 MB.
 numpy>=1.26.0

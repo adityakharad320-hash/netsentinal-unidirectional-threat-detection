@@ -1,7 +1,7 @@
 """
 Compliance, Privacy Policy & Operational Terms Component for NetSentinel.
 Documents physical data diode invariants, zero-retention privacy policies,
-and defense network operational terms for NTRO Problem Statement 26145.
+and network operational terms for NetSentinel.
 """
 import streamlit as st
 from dashboard.theme import get_theme_tokens
@@ -34,7 +34,7 @@ def render_compliance_view(theme_mode: str = "light"):
                     <span class="tag-live">AIR-GAP ISOLATION: VERIFIED</span>
                 </div>
                 <div style="font-size:12px; color:{t['text_muted']}; margin-bottom:16px;">
-                    Effective Date: September 2026 | Version: 2.0.0 | Scope: Passive Air-Gapped Network Sensor (NTRO PS-26145)
+                    Effective Date: September 2026 | Version: 2.0.0 | Scope: Passive Air-Gapped Network Sensor
                 </div>
                 
                 <div style="margin-bottom:14px;">
@@ -76,7 +76,7 @@ def render_compliance_view(theme_mode: str = "light"):
                     <div style="font-size:13px; font-weight:600; color:{t['text_main']};">5. Synthetic Data Guarantee</div>
                     <div style="font-size:13px; color:{t['text_muted']}; margin-top:4px;">
                         All demonstration replays and benchmark validation datasets utilize synthetic, sanitized network traffic traces
-                        modeled strictly after SIH 26145 threat scenarios. No operational defense intelligence or personally identifiable
+                        modeled strictly after standardized unidirectional threat scenarios. No operational defense intelligence or personally identifiable
                         information (PII) is included in any sample capture.
                     </div>
                 </div>
@@ -91,10 +91,10 @@ def render_compliance_view(theme_mode: str = "light"):
             <div class="editorial-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <div style="font-size:14px; font-weight:700; color:{t['text_main']};">TERMS OF DEFENSE OPERATION & GOVERNANCE</div>
-                    <span class="tag-mono">NTRO PS-26145</span>
+                    <span class="tag-mono">NETSENTINEL CORE</span>
                 </div>
                 <div style="font-size:12px; color:{t['text_muted']}; margin-bottom:16px;">
-                    Regulatory Authority: National Technical Research Organisation (NTRO) | Classification: Defense Research
+                    System: NetSentinel Cyber Threat Sensor | Classification: Network Security Defense
                 </div>
 
                 <div style="margin-bottom:14px;">

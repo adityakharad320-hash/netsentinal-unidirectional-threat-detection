@@ -1,5 +1,5 @@
 """
-Versioned Feature Schema (v1) for SIH 2026 Cyber Threat Detection Engine.
+Versioned Feature Schema (v1) for NetSentinel Cyber Threat Detection Engine.
 Defines typed schemas, numerical vector conversion, and documentation metadata.
 """
 from typing import Dict, List, Any, Optional

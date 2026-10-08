@@ -15,7 +15,7 @@ class AlertSeverity(str, enum.Enum):
 
 class SecurityAlert_v2(BaseModel):
     """
-    Standardized SIH 2026 Security Alert (Schema Version 2.0).
+    Standardized NetSentinel Security Alert (Schema Version 2.0).
     Captures factual observed evidence, confidence with explicit semantics,
     and correlation metadata.
     """

@@ -1,5 +1,5 @@
 """
-Production Telemetry Feature Schema (v2.1-optimized) for SIH 2026 Threat Detection.
+Production Telemetry Feature Schema (v2.1-optimized) for NetSentinel Threat Detection.
 
 Defines the 54-feature numerical schema generated from Zeek & Suricata telemetry,
 supporting both structured explainability dictionaries and dense NumPy vectors.

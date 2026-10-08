@@ -100,8 +100,8 @@ class DashboardApiClient:
         except Exception:
             pass
         return {
-            "system": "SIH 2026 AI Cyber Threat Detection Engine",
-            "organization": "National Technical Research Organisation (NTRO)",
+            "system": "NetSentinel AI Cyber Threat Detection Engine",
+            "organization": "NetSentinel",
             "version": "2.0.0",
             "status": "ONLINE",
             "backend_mode": "DIRECT_IN_PROCESS",
