@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from dashboard.theme import get_theme_tokens
 
 
-def render_alert_details(alerts: List[Dict[str, Any]], theme_mode: str = "light"):
+def render_alert_details(alerts: List[Dict[str, Any]], theme_mode: str = "light", api_client: Any = None):
     if not alerts:
         st.info("No security alert selected for inspection.")
         return
@@ -64,6 +64,81 @@ def render_alert_details(alerts: List[Dict[str, Any]], theme_mode: str = "light"
             )
     else:
         st.caption("No specific abnormal evidence rules triggered.")
+
+    # ── AI Advisory Alert Explanation (Claude) ─────────────────────────────────
+    st.markdown("---")
+    col_ai_title, col_ai_badge = st.columns([3, 1])
+    with col_ai_title:
+        st.markdown("#### AI Alert Explanation (Claude)")
+        st.markdown(
+            f"<div style='font-size:12px; color:{t['text_muted']}; margin-top:-6px; margin-bottom:12px;'>"
+            "Contextual threat interpretation, false-positive analysis, and recommended human triage steps."
+            "</div>",
+            unsafe_allow_html=True
+        )
+    with col_ai_badge:
+        st.markdown(
+            f"<div style='text-align:right; margin-top:4px;'><span class='tag-mono' style='background:{t['badge_bg']}; border:1px solid {t['badge_border']}; color:{t['text_muted']};'>AI ADVISORY • NON-INTRUSIVE</span></div>",
+            unsafe_allow_html=True
+        )
+
+    alert_id = alert.get("alert_id") or "default_alert"
+    session_key = f"claude_explanation_{alert_id}"
+
+    btn_col, status_col = st.columns([1, 3])
+    with btn_col:
+        explain_clicked = st.button("✨ Explain with Claude", key=f"btn_explain_{alert_id}")
+
+    if explain_clicked:
+        if api_client is None:
+            from dashboard.api_client import DashboardApiClient
+            api_client = st.session_state.get("api_client") or DashboardApiClient()
+
+        with st.spinner("Generating Claude advisory explanation..."):
+            ai_resp = api_client.explain_alert(alert)
+            st.session_state[session_key] = ai_resp
+
+    explanation_data = st.session_state.get(session_key)
+    if explanation_data:
+        status = explanation_data.get("status", "success")
+        model_name = explanation_data.get("model_used") or "Claude"
+        explanation_text = explanation_data.get("explanation", "")
+        notice = explanation_data.get("advisory_notice", "AI-generated advisory interpretation. This advisory does not modify detection results, severity, or trigger automated network actions.")
+
+        if status == "missing_api_key":
+            st.warning(explanation_text, icon="⚠️")
+        elif status == "auth_error":
+            st.error(explanation_text, icon="🔒")
+        elif status in ("rate_limited", "timeout", "connection_error", "error"):
+            st.error(explanation_text, icon="⚠️")
+        else:
+            # Success: Render formatted explanation card
+            st.markdown(
+                f"""
+                <div class="editorial-card" style="border-left: 3px solid {t['accent_blue']};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-size:12px; font-weight:700; color:{t['text_main']};">
+                            CLAUDE INTELLIGENCE ADVISORY
+                        </span>
+                        <span class="tag-mono" style="font-size:10px; color:{t['text_muted']};">
+                            Model: {model_name}
+                        </span>
+                    </div>
+                    <div style="font-size:13px; color:{t['text_main']}; line-height:1.65; margin-bottom:14px;">
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(explanation_text)
+            st.markdown(
+                f"""
+                    </div>
+                    <div style="border-top:1px solid {t['border_card']}; padding-top:8px; font-size:11px; color:{t['text_subtle']}; font-family:'JetBrains Mono', monospace;">
+                        ℹ️ {notice}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     st.markdown("---")
 

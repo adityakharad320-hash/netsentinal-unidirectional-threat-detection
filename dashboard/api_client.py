@@ -144,6 +144,53 @@ class DashboardApiClient:
             pass
         return self.engine.get_statistics().model_dump()
 
+    def explain_alert(self, alert_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Requests an advisory explanation for a security alert from the Claude AI explainer.
+        Tries FastAPI endpoint first, then falls back to in-process ClaudeAlertExplainer.
+        """
+        payload = {
+            "alert_id": alert_data.get("alert_id"),
+            "threat_class": alert_data.get("threat_class", "UNKNOWN"),
+            "confidence_score": float(alert_data.get("confidence_score", 0.0)),
+            "severity": str(alert_data.get("severity", "INFO")),
+            "supporting_evidence": alert_data.get("supporting_evidence", []),
+            "primary_reason": alert_data.get("primary_reason")
+        }
+        # 1. Try FastAPI endpoint
+        try:
+            import httpx
+            resp = httpx.post(
+                f"{self.base_url}/api/ai/explain-alert",
+                json=payload,
+                timeout=20.0
+            )
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        # 2. In-process fallback
+        try:
+            from app.ai.models import ExplainAlertRequest
+            from app.ai.explainer import ClaudeAlertExplainer
+            explainer = ClaudeAlertExplainer()
+            req = ExplainAlertRequest(**payload)
+            res = explainer.explain_alert(req)
+            return res.model_dump()
+        except Exception as e:
+            return {
+                "alert_id": payload.get("alert_id"),
+                "threat_class": payload.get("threat_class"),
+                "severity": payload.get("severity"),
+                "confidence_score": payload.get("confidence_score"),
+                "explanation": f"Failed to initialize in-process AI explainer: {str(e)}",
+                "status": "error",
+                "model_used": None,
+                "ai_generated": True,
+                "advisory_notice": "AI-generated advisory interpretation. This advisory does not modify detection results, severity, or trigger automated network actions."
+            }
+
     def trigger_simulation(
         self,
         scenario_type: str,

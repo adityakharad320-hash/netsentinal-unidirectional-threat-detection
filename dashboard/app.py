@@ -171,7 +171,7 @@ elif view_selection == "Live Security Alerts":
     selected_alert = render_alerts_view(alerts, theme_mode)
     if selected_alert:
         st.markdown("---")
-        render_alert_details([selected_alert], theme_mode)
+        render_alert_details([selected_alert], theme_mode, api_client=api_client)
 
 elif view_selection == "Deep Threat Analytics":
     render_analytics(alerts, stats, theme_mode)

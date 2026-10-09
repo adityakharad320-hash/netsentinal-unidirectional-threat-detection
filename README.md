@@ -97,8 +97,10 @@ Operating strictly behind an isolated **optical hardware data diode**, NetSentin
    - Isolates the computationally intensive Isolation Forest (mean $17.3\text{ ms}$) to evaluate only ambiguous or novel flows ($rf\_conf < 0.75$).
    - High-confidence flows skip unsupervised tree projection entirely, slashing pipeline latency without sacrificing anomaly discovery.
 5. **Prioritized Threat Resolution**:
-   - Enforces deterministic rule hierarchy (`DATA_EXFILTRATION` > `C2_BEACONING` > `DGA_DNS_TUNNELLING` > `PORT_SCAN` > `ENCRYPTED_MALWARE` > `DDOS`).
-   - Eliminates legacy bug where asymmetric data exfiltration was masked by volumetric DDoS rules.
+6. **AI Advisory Alert Explanation (Claude)**:
+   - Integrates Anthropic's official Claude Messages API (`POST /api/ai/explain-alert`) to generate structured, four-part advisory explanations for human SOC operators.
+   - Summarizes threat significance, analyzes observed telemetry metrics, assesses false-positive scenarios, and provides recommended manual triage actions.
+   - Non-intrusive and strictly advisory: sends only minimal metadata (no raw payloads/PCAPs) and never alters classification models or network posture.
 
 ---
 
@@ -156,7 +158,25 @@ The repository enforces modular separation between the headless sensor appliance
 | Tier | Requirements File | Target Environment | Footprint |
 | :--- | :--- | :--- | :--- |
 | **Core Passive Sensor** | `requirements-sensor.txt` | Headless Data Diode Sensor Appliance | **< 85 MB** (6 packages: `numpy`, `pydantic`, `onnxruntime`, `scikit-learn`, `joblib`, `dpkt`) |
-| **Full SOC & Management** | `requirements.txt` | Central SOC, Streamlit Dashboard, FastAPI Server | Standard deployment with UI & benchmark suites |
+| **Full SOC & Management** | `requirements.txt` | Central SOC, Streamlit Dashboard, FastAPI Server | Standard deployment with UI, AI Explainer & benchmark suites |
+
+---
+
+## Environment Configuration
+
+To enable the **"Explain with Claude"** feature in the analyst dashboard:
+
+1. Copy the template configuration:
+   ```bash
+   cp .env.example .env
+   ```
+2. Add your Anthropic API Key in `.env` (or set as environment variable):
+   ```ini
+   ANTHROPIC_API_KEY=sk-ant-api03-...
+   # Optional: customize model (default: claude-3-5-haiku-20241022)
+   ANTHROPIC_MODEL=claude-3-5-haiku-20241022
+   ```
+   *(If unconfigured, NetSentinel runs normally in fully offline mode with clear instructions on alert explanation cards).*
 
 ---
 
@@ -169,12 +189,12 @@ cd sih-unidirectional-threat-detection
 python -m pip install -r requirements-sensor.txt
 ```
 
-### 2. Full Installation (Dashboard + API + Benchmarks)
+### 2. Full Installation (Dashboard + API + AI Explainer + Benchmarks)
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 3. Run the Full Test Suite (80 Automated Tests)
+### 3. Run the Full Test Suite (100 Automated Tests)
 ```powershell
 python -m pytest backend/tests -v
 ```
@@ -204,7 +224,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 streamlit run dashboard/app.py --server.port 8501
 ```
 
-Open [http://localhost:8501](http://localhost:8501) to view the monitoring interface.
+Open [http://localhost:8501](http://localhost:8501) to view the monitoring interface and inspect alerts with Claude.
 
 ---
 
@@ -212,8 +232,10 @@ Open [http://localhost:8501](http://localhost:8501) to view the monitoring inter
 
 ```
 sih-unidirectional-threat-detection/
+├── .env.example             # Template for API credentials & model config
 ├── backend/
 │   ├── app/
+│   │   ├── ai/              # Claude Messages API integration (models & explainer)
 │   │   ├── alerts/          # SecurityAlert_v2 engine & deduplication
 │   │   ├── detectors/       # 6 behavioral detection engines
 │   │   ├── ingestion/       # PCAP & raw packet stream readers
@@ -223,14 +245,14 @@ sih-unidirectional-threat-detection/
 │   │   └── main.py          # FastAPI application & WebSocket router
 │   ├── models/
 │   │   └── weights/         # Pre-trained weights & random_forest_v2.0.onnx
-│   ├── tests/               # 80 automated pytest test cases
+│   ├── tests/               # 100 automated pytest test cases
 │   ├── run_controlled_scenarios.py
 │   ├── run_pipeline_benchmark.py
 │   └── run_sih_benchmark.py
 ├── dashboard/
 │   ├── app.py               # Streamlit application layout
 │   ├── api_client.py        # Resilient API client with in-process fallback
-│   └── components/          # Overview, Alerts, Details, Analytics, Governance
+│   └── components/          # Overview, Alerts, Details ("Explain with Claude"), Analytics, Governance
 ├── optimized/               # Modular optimized reference implementation
 │   ├── gate.py              # Fast behavioral screening gate (<1 µs)
 │   ├── flow_tracker.py      # Welford O(1) statistical flow engine
@@ -240,7 +262,7 @@ sih-unidirectional-threat-detection/
 │   └── onnx_converter.py    # Sklearn-to-ONNX conversion pipeline
 ├── benchmarks/              # Microsecond profiling harnesses & raw JSON results
 ├── reports/                 # Comprehensive forensic & performance engineering reports
-├── requirements.txt         # Full platform dependencies
+├── requirements.txt         # Full platform dependencies (including anthropic)
 ├── requirements-sensor.txt  # Headless passive diode sensor dependencies (<85 MB)
 └── docs/                    # Technical architecture & compliance specifications
 ```

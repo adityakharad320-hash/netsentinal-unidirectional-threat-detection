@@ -28,12 +28,15 @@ from app.alerts.models import SecurityAlert_v2, AlertSeverity, AlertStatistics
 from app.alerts.engine import AlertEngine
 from app.ml.hybrid_inference import HybridInferenceEngine
 from app.pipeline.orchestrator import StreamingPipelineOrchestrator, PipelinePerformanceReport
+from app.ai.models import ExplainAlertRequest, ExplainAlertResponse
+from app.ai.explainer import ClaudeAlertExplainer
 from app.config import SAMPLES_DIR, DATA_DIR
 
 logger = logging.getLogger("api")
 
-# Global Singleton Alert Engine & WebSocket Manager
+# Global Singleton Alert Engine, AI Explainer & WebSocket Manager
 global_alert_engine = AlertEngine(dedup_window_sec=30.0)
+global_ai_explainer = ClaudeAlertExplainer()
 
 class ConnectionManager:
     """Manages active WebSocket client connections for real-time alert broadcasts."""
@@ -123,6 +126,7 @@ async def root():
         "endpoints": {
             "alerts": "/alerts",
             "statistics": "/statistics",
+            "ai_explain_alert": "/api/ai/explain-alert",
             "pipeline_replay": "/pipeline/replay",
             "pipeline_simulate": "/pipeline/simulate",
             "pipeline_reset": "/pipeline/reset",
@@ -132,6 +136,15 @@ async def root():
             "docs": "/docs"
         }
     }
+
+@app.post("/api/ai/explain-alert", response_model=ExplainAlertResponse, tags=["AI Advisory"])
+@app.post("/ai/explain-alert", response_model=ExplainAlertResponse, tags=["AI Advisory"], include_in_schema=False)
+async def explain_alert(req: ExplainAlertRequest):
+    """
+    Generate an advisory explanation for a security alert using Anthropic Claude.
+    Does not modify detection results, models, or network state.
+    """
+    return global_ai_explainer.explain_alert(req)
 
 @app.get("/alerts", response_model=List[SecurityAlert_v2], tags=["Alerts"])
 async def get_alerts(
