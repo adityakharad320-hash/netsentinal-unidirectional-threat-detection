@@ -1,13 +1,13 @@
-# NetSentinel — Passive Cyber Threat Detection for Unidirectional Networks
+# NetSentinal — Passive Cyber Threat Detection for Unidirectional Networks
 
-[![Product](https://img.shields.io/badge/Product-NetSentinel-09090B.svg)](https://netsentinel.dev)
-[![Architecture](https://img.shields.io/badge/Architecture-Data%20Diode%20Air--Gap-blue.svg)](https://netsentinel.dev)
+[![Product](https://img.shields.io/badge/Product-NetSentinal-09090B.svg)](https://netsentinal.dev)
+[![Architecture](https://img.shields.io/badge/Architecture-Data%20Diode%20Air--Gap-blue.svg)](https://netsentinal.dev)
 [![Tests](https://img.shields.io/badge/Tests-100%2F100%20Passing-brightgreen.svg)](backend/tests/)
 [![Inference Engine](https://img.shields.io/badge/Inference-ONNX%20Runtime%20SIMD-orange.svg)](backend/app/ml/)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-NetSentinel is a real-time, passive network security monitoring platform designed for environments where traffic flows in only one direction — such as networks protected by hardware data diodes. It detects and classifies cyber threats from raw IP traffic without requiring a return path, decrypting payloads, or taking any active network action.
+NetSentinal is a real-time, passive network security monitoring platform designed for environments where traffic flows in only one direction — such as networks protected by hardware data diodes. It detects and classifies cyber threats from raw IP traffic without requiring a return path, decrypting payloads, or taking any active network action.
 
 ---
 
@@ -21,7 +21,7 @@ In a unidirectional setup:
 - No inline blocking or active response is possible.
 - Flow state must be inferred entirely from forward-direction packet headers and timing.
 
-NetSentinel is built around this constraint. It treats missing reverse packets as normal, infers flow completion from temporal TTLs, and makes all classifications from one-directional telemetry metadata alone.
+NetSentinal is built around this constraint. It treats missing reverse packets as normal, infers flow completion from temporal TTLs, and makes all classifications from one-directional telemetry metadata alone.
 
 ---
 
@@ -140,7 +140,7 @@ Classifier outputs from RF and Isolation Forest are merged by a prioritized fusi
 
 ## Claude-Powered Alert Analysis
 
-NetSentinel includes an optional **"Explain with Claude"** feature in the SOC dashboard. When an analyst clicks the button on any alert detail panel, the system calls Anthropic's Claude Messages API and displays a structured explanation.
+NetSentinal includes an optional **"Explain with Claude"** feature in the SOC dashboard. When an analyst clicks the button on any alert detail panel, the system calls Anthropic's Claude Messages API and displays a structured explanation.
 
 ### What is sent to Claude
 Only minimal, factual alert metadata is transmitted — no raw packet payloads, no PCAPs, no credentials, and no internal network topology:
@@ -240,7 +240,7 @@ Measured on CPU-only hardware across 6 replay scenarios (1,618 events, 613 activ
 
 ## Unidirectional Compliance
 
-NetSentinel is designed from the ground up for receive-only environments:
+NetSentinal is designed from the ground up for receive-only environments:
 
 - **Read-only ingest** — all stream processing uses `open(..., 'rb')` iterators and generator pipelines; no write sockets.
 - **Zero return path** — no calls to `send()`, `sendto()`, or any packet-transmission primitive.
@@ -383,4 +383,4 @@ sih-unidirectional-threat-detection/
 
 MIT License.
 
-NetSentinel — [netsentinel.dev](https://netsentinel.dev) · [contact@netsentinel.dev](mailto:contact@netsentinel.dev)
+NetSentinal — [netsentinal.dev](https://netsentinal.dev) · [getintouch@netsentinal.dev](mailto:getintouch@netsentinal.dev)
